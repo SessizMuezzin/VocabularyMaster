@@ -1,0 +1,304 @@
+﻿<UserControl x:Class="VocabularyMaster.WPF.Views.TestView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:converters="clr-namespace:VocabularyMaster.WPF.Converters">
+    <UserControl.Resources>
+        <converters:EnumToBooleanConverter x:Key="EnumToBooleanConverter"/>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+    </UserControl.Resources>
+
+    <Grid Margin="30">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header Section -->
+        <Grid Grid.Row="0" Margin="0,0,0,30">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0">
+                <TextBlock Text="🎯 Kelime Testi" FontSize="32" FontWeight="Bold" Foreground="#2c3e50"/>
+                <TextBlock Text="Kelimelerinizi test edin ve öğrenin!" FontSize="14" Foreground="#7f8c8d" Margin="0,5,0,0"/>
+            </StackPanel>
+
+            <!-- Stats Cards -->
+            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <Border Background="#4CAF50" CornerRadius="10" Padding="15,10" Margin="0,0,10,0" MinWidth="80">
+                    <StackPanel HorizontalAlignment="Center">
+                        <TextBlock Text="✓" FontSize="20" Foreground="White" HorizontalAlignment="Center" FontWeight="Bold"/>
+                        <TextBlock Text="{Binding CorrectCount}" FontSize="24" Foreground="White" HorizontalAlignment="Center" FontWeight="Bold"/>
+                        <TextBlock Text="Doğru" FontSize="11" Foreground="White" HorizontalAlignment="Center" Opacity="0.9"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Background="#f44336" CornerRadius="10" Padding="15,10" Margin="0,0,10,0" MinWidth="80">
+                    <StackPanel HorizontalAlignment="Center">
+                        <TextBlock Text="✗" FontSize="20" Foreground="White" HorizontalAlignment="Center" FontWeight="Bold"/>
+                        <TextBlock Text="{Binding WrongCount}" FontSize="24" Foreground="White" HorizontalAlignment="Center" FontWeight="Bold"/>
+                        <TextBlock Text="Yanlış" FontSize="11" Foreground="White" HorizontalAlignment="Center" Opacity="0.9"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Background="#FF9800" CornerRadius="10" Padding="15,10" MinWidth="80">
+                    <StackPanel HorizontalAlignment="Center">
+                        <TextBlock Text="🔥" FontSize="20" HorizontalAlignment="Center"/>
+                        <TextBlock FontSize="20" Foreground="White" HorizontalAlignment="Center" FontWeight="Bold">
+                            <Run Text="{Binding CurrentStreak}"/>
+                            <Run Text="/" FontSize="14"/>
+                            <Run Text="{Binding BestStreak}" FontSize="14"/>
+                        </TextBlock>
+                        <TextBlock Text="Seri" FontSize="11" Foreground="White" HorizontalAlignment="Center" Opacity="0.9"/>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </Grid>
+
+        <!-- Settings Bar -->
+        <Border Grid.Row="1" Background="#f8f9fa" CornerRadius="10" Padding="20,15" Margin="0,0,0,30">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="15"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="15"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0" Text="📋 Test Türü:" FontSize="14" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,15,0"/>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <Border Background="White" BorderBrush="#ddd" BorderThickness="2" CornerRadius="8" Padding="12,8" Margin="0,0,10,0">
+                        <RadioButton Content="EN → TR" 
+                                     IsChecked="{Binding SelectedTestMode, Converter={StaticResource EnumToBooleanConverter}, ConverterParameter=EnglishToTurkish}"
+                                     FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                    </Border>
+
+                    <Border Background="White" BorderBrush="#ddd" BorderThickness="2" CornerRadius="8" Padding="12,8" Margin="0,0,10,0">
+                        <RadioButton Content="TR → EN"
+                                     IsChecked="{Binding SelectedTestMode, Converter={StaticResource EnumToBooleanConverter}, ConverterParameter=TurkishToEnglish}"
+                                     FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                    </Border>
+
+                    <Border Background="#FFF3E0" BorderBrush="#FF9800" BorderThickness="2" CornerRadius="8" Padding="12,8">
+                        <RadioButton Content="🎯 Çoktan Seçmeli"
+                                     IsChecked="{Binding SelectedTestMode, Converter={StaticResource EnumToBooleanConverter}, ConverterParameter=MultipleChoice}"
+                                     FontSize="13" FontWeight="Bold" Foreground="#E65100" VerticalAlignment="Center"/>
+                    </Border>
+                </StackPanel>
+
+                <TextBlock Grid.Column="2" Text="📚 Seviye:" FontSize="14" FontWeight="Bold" VerticalAlignment="Center"/>
+
+                <Border Grid.Column="4" Background="White" BorderBrush="#ddd" BorderThickness="2" CornerRadius="8">
+                    <ComboBox Padding="12,8" BorderThickness="0" FontSize="13"
+                              SelectionChanged="DifficultyComboBox_SelectionChanged"
+                              x:Name="DifficultyFilterComboBox"
+                              VerticalAlignment="Center" MinWidth="130">
+                        <ComboBoxItem Content="Tümü" IsSelected="True"/>
+                        <ComboBoxItem Content="A1 - Başlangıç"/>
+                        <ComboBoxItem Content="A2 - Temel"/>
+                        <ComboBoxItem Content="B1 - Orta"/>
+                        <ComboBoxItem Content="B2 - Orta Üstü"/>
+                        <ComboBoxItem Content="C1 - İleri"/>
+                        <ComboBoxItem Content="C2 - Çok İleri"/>
+                    </ComboBox>
+                </Border>
+
+                <Border Grid.Column="6" Background="White" BorderBrush="#FF9800" BorderThickness="2" CornerRadius="8" Padding="12,8">
+                    <CheckBox Content="⭐ Favoriler" 
+                              IsChecked="{Binding ShowOnlyFavorites}"
+                              FontSize="13" FontWeight="SemiBold" Foreground="#E65100" VerticalAlignment="Center"/>
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- Question & Answer Section -->
+        <Grid Grid.Row="2">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Question Card -->
+            <Border Grid.Row="0" Background="White" CornerRadius="15" Padding="40" Margin="0,0,0,20"
+                    BorderBrush="#e0e0e0" BorderThickness="1">
+                <Border.Effect>
+                    <DropShadowEffect Color="#000000" Opacity="0.1" BlurRadius="20" ShadowDepth="5"/>
+                </Border.Effect>
+
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Question Prompt -->
+                    <TextBlock Grid.Row="0" Text="{Binding QuestionPrompt}" 
+                               FontSize="16" Foreground="#7f8c8d" 
+                               HorizontalAlignment="Center" Margin="0,0,0,20"/>
+
+                    <!-- Question Text -->
+                    <!-- Question Text -->
+                    <Border Grid.Row="1" VerticalAlignment="Center" Padding="40">
+                       <TextBlock Text="{Binding QuestionText}" 
+                           FontSize="64" FontWeight="Bold" 
+                           Foreground="#2c3e50"
+                           HorizontalAlignment="Center"
+                           TextWrapping="Wrap" TextAlignment="Center"
+                           LineHeight="80"/>    
+                    </Border>
+
+                    <!-- Answer Input or Multiple Choice -->
+                    <StackPanel Grid.Row="2" MaxWidth="800">
+                        <!-- Text Input Mode -->
+                        <Border Visibility="{Binding IsTextInputMode, Converter={StaticResource BoolToVisibilityConverter}}"
+                                Background="#f8f9fa" BorderBrush="#2196F3" BorderThickness="3" 
+                                CornerRadius="10" Margin="0,20,0,0">
+                            <TextBox Text="{Binding UserAnswer, UpdateSourceTrigger=PropertyChanged}" 
+                                     FontSize="24" Padding="20" BorderThickness="0"
+                                     Background="Transparent"
+                                     HorizontalAlignment="Stretch"
+                                     VerticalContentAlignment="Center"
+                                     FontWeight="SemiBold">
+                                <TextBox.InputBindings>
+                                    <KeyBinding Key="Return" Command="{Binding CheckAnswerCommand}"/>
+                                </TextBox.InputBindings>
+                                <TextBox.Style>
+                                    <Style TargetType="TextBox">
+                                        <Style.Triggers>
+                                            <Trigger Property="Text" Value="">
+                                                <Setter Property="Background">
+                                                    <Setter.Value>
+                                                        <VisualBrush Stretch="None">
+                                                            <VisualBrush.Visual>
+                                                                <TextBlock Text="Cevabınızı buraya yazın..." 
+                                                                           Foreground="#95a5a6" FontSize="20" Padding="20,0,0,0"/>
+                                                            </VisualBrush.Visual>
+                                                        </VisualBrush>
+                                                    </Setter.Value>
+                                                </Setter>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBox.Style>
+                            </TextBox>
+                        </Border>
+
+                        <!-- Multiple Choice Mode -->
+                        <ItemsControl x:Name="OptionsItemsControl" 
+                                      ItemsSource="{Binding MultipleChoiceOptions}" 
+                                      Margin="0,20,0,0"
+                                      Visibility="{Binding IsMultipleChoiceMode, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <UniformGrid Columns="2" HorizontalAlignment="Stretch"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border x:Name="OptionBorder"
+                                            Background="White" 
+                                            BorderBrush="#ddd" 
+                                            BorderThickness="2"
+                                            CornerRadius="10" 
+                                            Padding="20" 
+                                            Margin="5" 
+                                            Cursor="Hand"
+                                            MinHeight="70"
+                                            MouseLeftButtonUp="Option_Click" 
+                                            Tag="{Binding}">
+                                        <Border.Effect>
+                                            <DropShadowEffect Color="#000000" Opacity="0.05" BlurRadius="10" ShadowDepth="2"/>
+                                        </Border.Effect>
+
+                                        <TextBlock Text="{Binding}" 
+                                                   FontSize="20" 
+                                                   FontWeight="SemiBold"
+                                                   VerticalAlignment="Center"
+                                                   HorizontalAlignment="Center"
+                                                   TextWrapping="Wrap"
+                                                   TextAlignment="Center"
+                                                   Foreground="#2c3e50"/>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <!-- Feedback -->
+                        <Border Background="#E3F2FD" Padding="20" CornerRadius="10" Margin="0,20,0,0"
+                                Visibility="{Binding IsAnswerVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <TextBlock Text="{Binding Feedback}" 
+                                       FontSize="18" FontWeight="Bold"
+                                       Foreground="#1976D2"
+                                       TextAlignment="Center"/>
+                        </Border>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Action Buttons -->
+            <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center">
+                <Button Content="✓ Kontrol Et" Command="{Binding CheckAnswerCommand}"
+                        Width="160" Height="50" Margin="0,0,15,0"
+                        Background="#4CAF50" Foreground="White" FontSize="16" FontWeight="Bold"
+                        BorderThickness="0" Cursor="Hand">
+                    <Button.Effect>
+                        <DropShadowEffect Color="#4CAF50" Opacity="0.3" BlurRadius="15" ShadowDepth="3"/>
+                    </Button.Effect>
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}" 
+                                    CornerRadius="25"
+                                    Padding="{TemplateBinding Padding}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+
+                <Button Content="👁 Göster" Command="{Binding ShowAnswerCommand}"
+                        Width="160" Height="50" Margin="0,0,15,0"
+                        Background="#FF9800" Foreground="White" FontSize="16" FontWeight="Bold"
+                        BorderThickness="0" Cursor="Hand">
+                    <Button.Effect>
+                        <DropShadowEffect Color="#FF9800" Opacity="0.3" BlurRadius="15" ShadowDepth="3"/>
+                    </Button.Effect>
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}" 
+                                    CornerRadius="25"
+                                    Padding="{TemplateBinding Padding}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+
+                <Button Content="→ Sonraki" Command="{Binding NextWordCommand}"
+                        Width="160" Height="50"
+                        Background="#2196F3" Foreground="White" FontSize="16" FontWeight="Bold"
+                        BorderThickness="0" Cursor="Hand">
+                    <Button.Effect>
+                        <DropShadowEffect Color="#2196F3" Opacity="0.3" BlurRadius="15" ShadowDepth="3"/>
+                    </Button.Effect>
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}" 
+                                    CornerRadius="25"
+                                    Padding="{TemplateBinding Padding}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</UserControl>
