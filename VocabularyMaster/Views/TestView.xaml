@@ -284,7 +284,7 @@
                 <Button Content="→ Sonraki" Command="{Binding NextWordCommand}"
                         Width="160" Height="50"
                         Background="#2196F3" Foreground="White" FontSize="16" FontWeight="Bold"
-                        BorderThickness="0" Cursor="Hand">
+                        BorderThickness="0" Cursor="Hand" Click="Button_Click">
                     <Button.Effect>
                         <DropShadowEffect Color="#2196F3" Opacity="0.3" BlurRadius="15" ShadowDepth="3"/>
                     </Button.Effect>

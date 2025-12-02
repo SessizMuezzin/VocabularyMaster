@@ -44,6 +44,12 @@ namespace VocabularyMaster.WPF.ViewModels
             NavigateToFlashcardCommand = new RelayCommand(_ => CurrentViewModel = _flashcardViewModel);
         }
 
+        private async Task NavigateToWordsAsync()
+        {
+            CurrentViewModel = _wordListViewModel;
+            await _wordListViewModel.InitializeAsync();
+        }
+
         private void NavigateToDashboard()
         {
             CurrentViewModel = _dashboardViewModel;

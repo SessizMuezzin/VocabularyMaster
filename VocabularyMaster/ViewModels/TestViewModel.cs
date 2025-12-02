@@ -15,7 +15,6 @@ namespace VocabularyMaster.WPF.ViewModels
     {
         private readonly IWordRepository _wordRepository;
         private readonly IReviewHistoryRepository _reviewHistoryRepository;
-
         private DifficultyLevel? _selectedDifficultyLevel;
         private Word? _currentWord;
         private string _userAnswer = string.Empty;
@@ -311,9 +310,6 @@ namespace VocabularyMaster.WPF.ViewModels
             }
 
             UpdateWordStats(isCorrect, correctAnswer);
-
-            await Task.Delay(2000);
-            await LoadNewWordAsync();
         }
 
         private void UpdateWordStats(bool isCorrect, string correctAnswer)

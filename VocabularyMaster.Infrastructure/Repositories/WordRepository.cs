@@ -38,6 +38,8 @@ namespace VocabularyMaster.Infrastructure.Repositories
         {
             return await _context.Words
                 .Include(w => w.Meanings)
+                .AsNoTracking()
+                .AsSplitQuery()
                 .OrderByDescending(w => w.DateAdded)
                 .ToListAsync();
         }
@@ -114,8 +116,11 @@ namespace VocabularyMaster.Infrastructure.Repositories
 
         public async Task<int> GetReviewedWordCountAsync()
         {
-            return await _context.Words.CountAsync(w => w.ReviewCount > 0);
+            return await _context.Words
+                .Where(w => w.ReviewCount > 0)
+                .CountAsync();
         }
+
 
         public async Task<List<Word>> GetWordsNeedingReviewAsync()
         {

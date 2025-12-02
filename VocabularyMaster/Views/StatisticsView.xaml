@@ -10,6 +10,7 @@
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
+            <!-- Header -->
             <Grid Grid.Row="0" Margin="0,0,0,20">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
@@ -17,13 +18,47 @@
                 </Grid.ColumnDefinitions>
 
                 <TextBlock Grid.Column="0" Text="İstatistikler" FontSize="24" FontWeight="Bold"/>
-                <Button Grid.Column="1" Content="🔄 Yenile" Command="{Binding RefreshCommand}"
-                        Padding="10,5" Background="#2196F3" Foreground="White" 
-                        BorderThickness="0" Cursor="Hand"/>
+                <Button Grid.Column="1" 
+                        Content="🔄 Yenile" 
+                        Command="{Binding RefreshCommand}"
+                        Padding="15,8" 
+                        Background="#2196F3" 
+                        Foreground="White" 
+                        FontSize="14"
+                        FontWeight="SemiBold"
+                        BorderThickness="0" 
+                        Cursor="Hand">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="{TemplateBinding Background}" 
+                                                CornerRadius="6"
+                                                Padding="{TemplateBinding Padding}">
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="#1976D2"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
             </Grid>
 
-            <Border Grid.Row="1" Background="#f5f5f5" BorderBrush="#e0e0e0" BorderThickness="1" 
-                    CornerRadius="10" Padding="20" Margin="0,0,0,20">
+            <!-- Stats Cards -->
+            <Border Grid.Row="1" 
+                    Background="#f5f5f5" 
+                    BorderBrush="#e0e0e0" 
+                    BorderThickness="1" 
+                    CornerRadius="10" 
+                    Padding="20" 
+                    Margin="0,0,0,20">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
@@ -33,30 +68,53 @@
                     </Grid.ColumnDefinitions>
 
                     <StackPanel Grid.Column="0" HorizontalAlignment="Center">
-                        <TextBlock Text="Toplam Kelime" FontSize="14" Foreground="#666" HorizontalAlignment="Center"/>
-                        <TextBlock Text="{Binding TotalWords}" FontSize="32" FontWeight="Bold" 
-                                   Foreground="#4CAF50" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Toplam Kelime" 
+                                   FontSize="14" 
+                                   Foreground="#666" 
+                                   HorizontalAlignment="Center"/>
+                        <TextBlock Text="{Binding TotalWords, Mode=OneWay}" 
+                                   FontSize="32" 
+                                   FontWeight="Bold" 
+                                   Foreground="#4CAF50" 
+                                   HorizontalAlignment="Center"/>
                     </StackPanel>
 
                     <StackPanel Grid.Column="1" HorizontalAlignment="Center">
-                        <TextBlock Text="Çalışılan Kelime" FontSize="14" Foreground="#666" HorizontalAlignment="Center"/>
-                        <TextBlock Text="{Binding ReviewedWords}" FontSize="32" FontWeight="Bold" 
-                                   Foreground="#2196F3" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Çalışılan Kelime" 
+                                   FontSize="14" 
+                                   Foreground="#666" 
+                                   HorizontalAlignment="Center"/>
+                        <TextBlock Text="{Binding ReviewedWords, Mode=OneWay}" 
+                                   FontSize="32" 
+                                   FontWeight="Bold" 
+                                   Foreground="#2196F3" 
+                                   HorizontalAlignment="Center"/>
                     </StackPanel>
 
                     <StackPanel Grid.Column="2" HorizontalAlignment="Center">
-                        <TextBlock Text="Toplam Test" FontSize="14" Foreground="#666" HorizontalAlignment="Center"/>
-                        <TextBlock Text="{Binding TotalReviews}" FontSize="32" FontWeight="Bold" 
-                                   Foreground="#FF9800" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Toplam Test" 
+                                   FontSize="14" 
+                                   Foreground="#666" 
+                                   HorizontalAlignment="Center"/>
+                        <TextBlock Text="{Binding TotalReviews, Mode=OneWay}" 
+                                   FontSize="32" 
+                                   FontWeight="Bold" 
+                                   Foreground="#FF9800" 
+                                   HorizontalAlignment="Center"/>
                     </StackPanel>
 
                     <StackPanel Grid.Column="3" HorizontalAlignment="Center">
-                        <TextBlock Text="Başarı Oranı" FontSize="14" Foreground="#666" HorizontalAlignment="Center"/>
-                        <TextBlock FontSize="32" FontWeight="Bold" 
-                                   Foreground="#9C27B0" HorizontalAlignment="Center">
+                        <TextBlock Text="Başarı Oranı" 
+                                   FontSize="14" 
+                                   Foreground="#666" 
+                                   HorizontalAlignment="Center"/>
+                        <TextBlock FontSize="32" 
+                                   FontWeight="Bold" 
+                                   Foreground="#9C27B0" 
+                                   HorizontalAlignment="Center">
                             <TextBlock.Text>
                                 <MultiBinding StringFormat="{}{0:N1}%">
-                                    <Binding Path="OverallSuccessRate"/>
+                                    <Binding Path="OverallSuccessRate" Mode="OneWay"/>
                                 </MultiBinding>
                             </TextBlock.Text>
                         </TextBlock>
@@ -64,10 +122,17 @@
                 </Grid>
             </Border>
 
+            <!-- Category Statistics -->
             <StackPanel Grid.Row="2" Margin="0,0,0,20">
-                <TextBlock Text="Kategorilere Göre İstatistikler" FontSize="18" FontWeight="Bold" Margin="0,0,0,10"/>
-                <Border Background="White" BorderBrush="#e0e0e0" BorderThickness="1" CornerRadius="5">
-                    <DataGrid ItemsSource="{Binding CategoryStats}"
+                <TextBlock Text="Kategorilere Göre İstatistikler" 
+                           FontSize="18" 
+                           FontWeight="Bold" 
+                           Margin="0,0,0,10"/>
+                <Border Background="White" 
+                        BorderBrush="#e0e0e0" 
+                        BorderThickness="1" 
+                        CornerRadius="5">
+                    <DataGrid ItemsSource="{Binding CategoryStats, Mode=OneWay}"
                               AutoGenerateColumns="False"
                               IsReadOnly="True"
                               GridLinesVisibility="Horizontal"
@@ -76,18 +141,34 @@
                               RowHeight="35"
                               BorderThickness="0">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Kategori" Binding="{Binding Category}" Width="*" FontSize="14"/>
-                            <DataGridTextColumn Header="Kelime Sayısı" Binding="{Binding WordCount}" Width="150" FontSize="14"/>
-                            <DataGridTextColumn Header="Ortalama Başarı %" Binding="{Binding AverageSuccessRate, StringFormat=N1}" Width="150" FontSize="14"/>
+                            <DataGridTextColumn Header="Kategori" 
+                                                Binding="{Binding Category}" 
+                                                Width="*" 
+                                                FontSize="14"/>
+                            <DataGridTextColumn Header="Kelime Sayısı" 
+                                                Binding="{Binding WordCount}" 
+                                                Width="150" 
+                                                FontSize="14"/>
+                            <DataGridTextColumn Header="Ortalama Başarı %" 
+                                                Binding="{Binding AverageSuccessRate, StringFormat=N1}" 
+                                                Width="150" 
+                                                FontSize="14"/>
                         </DataGrid.Columns>
                     </DataGrid>
                 </Border>
             </StackPanel>
 
+            <!-- Difficulty Statistics -->
             <StackPanel Grid.Row="3">
-                <TextBlock Text="Zorluk Seviyelerine Göre İstatistikler" FontSize="18" FontWeight="Bold" Margin="0,0,0,10"/>
-                <Border Background="White" BorderBrush="#e0e0e0" BorderThickness="1" CornerRadius="5">
-                    <DataGrid ItemsSource="{Binding DifficultyStats}"
+                <TextBlock Text="Zorluk Seviyelerine Göre İstatistikler" 
+                           FontSize="18" 
+                           FontWeight="Bold" 
+                           Margin="0,0,0,10"/>
+                <Border Background="White" 
+                        BorderBrush="#e0e0e0" 
+                        BorderThickness="1" 
+                        CornerRadius="5">
+                    <DataGrid ItemsSource="{Binding DifficultyStats, Mode=OneWay}"
                               AutoGenerateColumns="False"
                               IsReadOnly="True"
                               GridLinesVisibility="Horizontal"
@@ -96,9 +177,18 @@
                               RowHeight="35"
                               BorderThickness="0">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Seviye" Binding="{Binding LevelName}" Width="*" FontSize="14"/>
-                            <DataGridTextColumn Header="Kelime Sayısı" Binding="{Binding WordCount}" Width="150" FontSize="14"/>
-                            <DataGridTextColumn Header="Ortalama Başarı %" Binding="{Binding AverageSuccessRate, StringFormat=N1}" Width="150" FontSize="14"/>
+                            <DataGridTextColumn Header="Seviye" 
+                                                Binding="{Binding LevelName}" 
+                                                Width="*" 
+                                                FontSize="14"/>
+                            <DataGridTextColumn Header="Kelime Sayısı" 
+                                                Binding="{Binding WordCount}" 
+                                                Width="150" 
+                                                FontSize="14"/>
+                            <DataGridTextColumn Header="Ortalama Başarı %" 
+                                                Binding="{Binding AverageSuccessRate, StringFormat=N1}" 
+                                                Width="150" 
+                                                FontSize="14"/>
                         </DataGrid.Columns>
                     </DataGrid>
                 </Border>

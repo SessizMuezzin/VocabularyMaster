@@ -29,5 +29,7 @@ namespace VocabularyMaster.Core.Models
             : 0;
 
         public bool IsNew => ReviewCount == 0 || (DateTime.Now - DateAdded).TotalDays <= 7;
+
+
     }
 }

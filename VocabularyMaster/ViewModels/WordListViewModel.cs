@@ -14,12 +14,21 @@ namespace VocabularyMaster.WPF.ViewModels
     public class WordListViewModel : ViewModelBase
     {
         private readonly IWordRepository _wordRepository;
+        private ObservableCollection<Word> _allWords = new();  // CACHE
         private ObservableCollection<Word> _words;
         private Word? _selectedWord;
         private string _searchText = string.Empty;
         private string? _selectedCategory;
         private DifficultyLevel? _selectedDifficulty;
         private bool _showOnlyFavorites;
+        private bool _isInitialized = false;
+        private bool _isLoading;
+
+        public bool IsLoading
+        {
+            get => _isLoading;
+            set => SetProperty(ref _isLoading, value);
+        }
 
         public bool ShowOnlyFavorites
         {
@@ -28,7 +37,7 @@ namespace VocabularyMaster.WPF.ViewModels
             {
                 if (SetProperty(ref _showOnlyFavorites, value))
                 {
-                    _ = LoadWordsAsync();
+                    ApplyFilters();
                 }
             }
         }
@@ -52,7 +61,7 @@ namespace VocabularyMaster.WPF.ViewModels
             {
                 if (SetProperty(ref _searchText, value))
                 {
-                    _ = LoadWordsAsync();
+                    ApplyFilters();
                 }
             }
         }
@@ -64,7 +73,7 @@ namespace VocabularyMaster.WPF.ViewModels
             {
                 if (SetProperty(ref _selectedCategory, value))
                 {
-                    _ = LoadWordsAsync();
+                    ApplyFilters();
                 }
             }
         }
@@ -76,7 +85,7 @@ namespace VocabularyMaster.WPF.ViewModels
             {
                 if (SetProperty(ref _selectedDifficulty, value))
                 {
-                    _ = LoadWordsAsync();
+                    ApplyFilters();
                 }
             }
         }
@@ -100,45 +109,86 @@ namespace VocabularyMaster.WPF.ViewModels
             DeleteWordCommand = new RelayCommand(async _ => await DeleteWordAsync(), _ => SelectedWord != null);
             RefreshCommand = new RelayCommand(async _ => await LoadWordsAsync());
             ToggleFavoriteCommand = new RelayCommand(async _ => await ToggleFavoriteAsync(), _ => SelectedWord != null);
+        }
 
-            _ = LoadWordsAsync();
-            _ = LoadCategoriesAsync();
+        public async Task InitializeAsync()
+        {
+            if (_isInitialized) return;
+
+            _isInitialized = true;
+
+            await LoadCategoriesAsync();
+
+            _ = Task.Run(async () =>
+            {
+                await LoadWordsAsync();
+            });
         }
 
         private async Task LoadWordsAsync()
         {
-            var words = await _wordRepository.GetAllAsync();
+            IsLoading = true;
+
+            try
+            {
+                var words = await _wordRepository.GetAllAsync();
+
+                _allWords.Clear();
+                foreach (var word in words)
+                {
+                    _allWords.Add(word);
+                }
+
+                ApplyFilters();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Kelimeler yüklenirken hata: {ex.Message}", "Hata");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        private void ApplyFilters()
+        {
+            if (!_isInitialized || !_allWords.Any()) return;
+
+            var filtered = _allWords.AsEnumerable();
+
+            // Kategori filtresi
+            if (!string.IsNullOrWhiteSpace(SelectedCategory) && SelectedCategory != "Tümü")
+            {
+                filtered = filtered.Where(w => w.Category == SelectedCategory);
+            }
+
+            // Seviye filtresi
+            if (SelectedDifficulty.HasValue)
+            {
+                filtered = filtered.Where(w => w.DifficultyLevel == SelectedDifficulty.Value);
+            }
 
             // Favori filtresi
             if (ShowOnlyFavorites)
             {
-                words = words.Where(w => w.IsFavorite).ToList();
+                filtered = filtered.Where(w => w.IsFavorite);
             }
 
-            // Arama - Geliştirme: Örnek cümlede de ara
+            // Arama filtresi
             if (!string.IsNullOrWhiteSpace(SearchText))
             {
-                words = words.Where(w =>
-                    w.English.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
-                    w.Turkish.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
-                    (!string.IsNullOrEmpty(w.ExampleSentence) && w.ExampleSentence.Contains(SearchText, StringComparison.OrdinalIgnoreCase))).ToList();
+                var searchLower = SearchText.ToLower();
+                filtered = filtered.Where(w =>
+                    w.English.ToLower().Contains(searchLower) ||
+                    w.Turkish.ToLower().Contains(searchLower) ||
+                    (w.ExampleSentence != null && w.ExampleSentence.ToLower().Contains(searchLower)) ||
+                    w.Meanings.Any(m => m.Turkish.ToLower().Contains(searchLower) ||
+                                   (m.ExampleSentence != null && m.ExampleSentence.ToLower().Contains(searchLower)))
+                );
             }
 
-            if (!string.IsNullOrEmpty(SelectedCategory) && SelectedCategory != "Tümü")
-            {
-                words = words.Where(w => w.Category == SelectedCategory).ToList();
-            }
-
-            if (SelectedDifficulty.HasValue)
-            {
-                words = words.Where(w => w.DifficultyLevel == SelectedDifficulty.Value).ToList();
-            }
-
-            Words.Clear();
-            foreach (var word in words)
-            {
-                Words.Add(word);
-            }
+            Words = new ObservableCollection<Word>(filtered);
         }
 
         private async Task ToggleFavoriteAsync()
@@ -147,15 +197,7 @@ namespace VocabularyMaster.WPF.ViewModels
 
             SelectedWord.IsFavorite = !SelectedWord.IsFavorite;
             await _wordRepository.UpdateAsync(SelectedWord);
-
-            // UI'ı güncelle
-            var index = Words.IndexOf(SelectedWord);
-            if (index >= 0)
-            {
-                Words[index] = SelectedWord;
-                OnPropertyChanged(nameof(Words));
-            }
-            await LoadWordsAsync();
+            ApplyFilters();
         }
 
         private async Task LoadCategoriesAsync()
@@ -168,7 +210,6 @@ namespace VocabularyMaster.WPF.ViewModels
                 Categories.Add(category);
             }
 
-            // YENİ EKLE - Varsayılan olarak "Tümü" seç
             if (string.IsNullOrEmpty(SelectedCategory))
             {
                 SelectedCategory = "Tümü";

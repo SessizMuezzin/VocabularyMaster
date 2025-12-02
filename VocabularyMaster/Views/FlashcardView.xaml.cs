@@ -1,5 +1,5 @@
-﻿using System.Windows;
-using System.Windows.Controls;
+﻿using System.Windows.Controls;
+using System.Windows.Input;
 
 namespace VocabularyMaster.WPF.Views
 {
@@ -10,11 +10,12 @@ namespace VocabularyMaster.WPF.Views
             InitializeComponent();
         }
 
-        // XAML tarafında "Click='Card_Click'" dendiği için bu metodun burada olması zorunlu.
-        private void Card_Click(object sender, RoutedEventArgs e)
+        private void Card_Click(object sender, MouseButtonEventArgs e)
         {
-            // Kart çevirme animasyonu veya mantığı buradaydıysa tekrar eklenmesi gerekebilir.
-            // Şimdilik boş bırakıyoruz ki hata gitsin ve proje çalışsın.
+            if (DataContext is ViewModels.FlashcardViewModel viewModel)
+            {
+                viewModel.FlipCardCommand.Execute(null);
+            }
         }
     }
 }

@@ -6,6 +6,7 @@ using System.Windows;
 using System.Windows.Input;
 using VocabularyMaster.Core.Interfaces;
 using VocabularyMaster.Core.Models;
+using VocabularyMaster.Core.Enums;
 using VocabularyMaster.WPF.Commands;
 
 namespace VocabularyMaster.WPF.ViewModels
@@ -14,7 +15,9 @@ namespace VocabularyMaster.WPF.ViewModels
     {
         private readonly IWordRepository _wordRepository;
         private readonly IReviewHistoryRepository _reviewHistoryRepository;
+        private List<Word> _originalFilteredWords = new();
         private List<Word> _allWords = new();
+        private List<Word> _filteredWords = new();
         private int _currentIndex = 0;
 
         public FlashcardViewModel(IWordRepository wordRepository, IReviewHistoryRepository reviewHistoryRepository)
@@ -29,6 +32,7 @@ namespace VocabularyMaster.WPF.ViewModels
             MarkWrongCommand = new RelayCommand(async _ => await MarkAnswerAsync(false));
             ShuffleCommand = new RelayCommand(_ => ShuffleCards());
             RestartCommand = new RelayCommand(_ => RestartSession());
+            ApplyFilterCommand = new RelayCommand(_ => ApplyFilter());
 
             _ = LoadWordsAsync();
         }
@@ -48,6 +52,8 @@ namespace VocabularyMaster.WPF.ViewModels
                 OnPropertyChanged(nameof(ExampleSentence));
                 OnPropertyChanged(nameof(ProgressText));
                 OnPropertyChanged(nameof(HasWords));
+                OnPropertyChanged(nameof(DifficultyColor));
+                OnPropertyChanged(nameof(DifficultyText));
             }
         }
 
@@ -58,6 +64,44 @@ namespace VocabularyMaster.WPF.ViewModels
             set
             {
                 _isFlipped = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private bool _showOnlyFavorites;
+        public bool ShowOnlyFavorites
+        {
+            get => _showOnlyFavorites;
+            set
+            {
+                _showOnlyFavorites = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private bool _isShuffled;
+        public bool IsShuffled
+        {
+            get => _isShuffled;
+            set
+            {
+                _isShuffled = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(ShuffleButtonText));
+                OnPropertyChanged(nameof(ShuffleButtonColor));
+            }
+        }
+
+        public string ShuffleButtonText => IsShuffled ? "↩️ Sırala" : "🔀 Karıştır";
+        public string ShuffleButtonColor => IsShuffled ? "#10b981" : "#64748b";
+
+        private string? _selectedDifficultyString = "Tümü";
+        public string? SelectedDifficultyString
+        {
+            get => _selectedDifficultyString;
+            set
+            {
+                _selectedDifficultyString = value;
                 OnPropertyChanged();
             }
         }
@@ -98,9 +142,36 @@ namespace VocabularyMaster.WPF.ViewModels
             }
         }
 
-        public string ProgressText => HasWords ? $"{_currentIndex + 1} / {_allWords.Count}" : "0 / 0";
+        public string ProgressText => HasWords ? $"{_currentIndex + 1} / {_filteredWords.Count}" : "0 / 0";
 
-        public bool HasWords => _allWords.Any();
+        public bool HasWords => _filteredWords.Any();
+
+        public string DifficultyColor
+        {
+            get
+            {
+                if (CurrentWord == null) return "#95a5a6";
+                return CurrentWord.DifficultyLevel switch
+                {
+                    DifficultyLevel.A1 => "#27ae60",
+                    DifficultyLevel.A2 => "#2ecc71",
+                    DifficultyLevel.B1 => "#3498db",
+                    DifficultyLevel.B2 => "#9b59b6",
+                    DifficultyLevel.C1 => "#e67e22",
+                    DifficultyLevel.C2 => "#e74c3c",
+                    _ => "#95a5a6"
+                };
+            }
+        }
+
+        public string DifficultyText
+        {
+            get
+            {
+                if (CurrentWord == null) return "";
+                return CurrentWord.DifficultyLevel.ToString();
+            }
+        }
 
         private int _correctCount;
         public int CorrectCount
@@ -137,6 +208,9 @@ namespace VocabularyMaster.WPF.ViewModels
             }
         }
 
+        public int TotalWordsCount => _allWords.Count;
+        public int FilteredWordsCount => _filteredWords.Count;
+
         #endregion
 
         #region Commands
@@ -148,6 +222,7 @@ namespace VocabularyMaster.WPF.ViewModels
         public ICommand MarkWrongCommand { get; }
         public ICommand ShuffleCommand { get; }
         public ICommand RestartCommand { get; }
+        public ICommand ApplyFilterCommand { get; }
 
         #endregion
 
@@ -159,21 +234,57 @@ namespace VocabularyMaster.WPF.ViewModels
             {
                 var words = await _wordRepository.GetAllAsync();
                 _allWords = words.ToList();
-
-                if (_allWords.Any())
-                {
-                    _currentIndex = 0;
-                    CurrentWord = _allWords[_currentIndex];
-                    IsFlipped = false;
-                }
-
-                OnPropertyChanged(nameof(HasWords));
+                ApplyFilter();
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Kelimeler yüklenirken hata oluştu: {ex.Message}",
                     "Hata", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+
+        public void ApplyFilter()
+        {
+            _filteredWords = _allWords.ToList();
+
+            // Favori filtresi
+            if (ShowOnlyFavorites)
+            {
+                _filteredWords = _filteredWords.Where(w => w.IsFavorite).ToList();
+            }
+
+            // Seviye filtresi
+            if (!string.IsNullOrEmpty(SelectedDifficultyString) && SelectedDifficultyString != "Tümü")
+            {
+                if (Enum.TryParse<DifficultyLevel>(SelectedDifficultyString, out var level))
+                {
+                    _filteredWords = _filteredWords.Where(w => w.DifficultyLevel == level).ToList();
+                }
+            }
+
+            // ORİJİNAL SIRAYI SAKLA
+            _originalFilteredWords = _filteredWords.ToList();
+
+            // İstatistikleri sıfırla
+            CorrectCount = 0;
+            WrongCount = 0;
+            IsShuffled = false;
+
+            // İlk karta git
+            if (_filteredWords.Any())
+            {
+                _currentIndex = 0;
+                CurrentWord = _filteredWords[_currentIndex];
+                IsFlipped = false;
+            }
+            else
+            {
+                CurrentWord = null;
+            }
+
+            OnPropertyChanged(nameof(HasWords));
+            OnPropertyChanged(nameof(ProgressText));
+            OnPropertyChanged(nameof(FilteredWordsCount));
         }
 
         private void FlipCard()
@@ -186,14 +297,14 @@ namespace VocabularyMaster.WPF.ViewModels
             if (CanGoNext())
             {
                 _currentIndex++;
-                CurrentWord = _allWords[_currentIndex];
+                CurrentWord = _filteredWords[_currentIndex];
                 IsFlipped = false;
             }
         }
 
         private bool CanGoNext()
         {
-            return _allWords.Any() && _currentIndex < _allWords.Count - 1;
+            return _filteredWords.Any() && _currentIndex < _filteredWords.Count - 1;
         }
 
         private void PreviousCard()
@@ -201,14 +312,14 @@ namespace VocabularyMaster.WPF.ViewModels
             if (CanGoPrevious())
             {
                 _currentIndex--;
-                CurrentWord = _allWords[_currentIndex];
+                CurrentWord = _filteredWords[_currentIndex];
                 IsFlipped = false;
             }
         }
 
         private bool CanGoPrevious()
         {
-            return _allWords.Any() && _currentIndex > 0;
+            return _filteredWords.Any() && _currentIndex > 0;
         }
 
         private async Task MarkAnswerAsync(bool isCorrect)
@@ -233,6 +344,20 @@ namespace VocabularyMaster.WPF.ViewModels
 
                 await _reviewHistoryRepository.AddAsync(reviewHistory);
 
+                var wordToUpdate = await _wordRepository.GetByIdAsync(CurrentWord.Id);
+                if (wordToUpdate != null)
+                {
+                    wordToUpdate.ReviewCount++;
+                    if (isCorrect)
+                        wordToUpdate.CorrectCount++;
+                    else
+                        wordToUpdate.WrongCount++;
+                    wordToUpdate.LastReviewed = DateTime.Now;
+
+                    await _wordRepository.UpdateAsync(wordToUpdate);
+                }
+
+                // CurrentWord'ü de güncelle (UI için)
                 CurrentWord.ReviewCount++;
                 if (isCorrect)
                     CurrentWord.CorrectCount++;
@@ -240,21 +365,29 @@ namespace VocabularyMaster.WPF.ViewModels
                     CurrentWord.WrongCount++;
                 CurrentWord.LastReviewed = DateTime.Now;
 
-                await _wordRepository.UpdateAsync(CurrentWord);
-
                 // Otomatik olarak bir sonraki karta geç
                 if (CanGoNext())
                 {
-                    await Task.Delay(300); // Kısa bir animasyon gecikmesi
+                    await Task.Delay(300);
                     NextCard();
                 }
                 else
                 {
-                    MessageBox.Show($"Tebrikler! Tüm kartları tamamladınız.\n\n" +
-                        $"Doğru: {CorrectCount}\n" +
-                        $"Yanlış: {WrongCount}\n" +
-                        $"Başarı Oranı: {SuccessRate:F1}%",
-                        "Oturum Tamamlandı", MessageBoxButton.OK, MessageBoxImage.Information);
+                    // KARTLAR BİTTİ - TEBRİK MESAJI
+                    var result = MessageBox.Show(
+                        $"🎉 Tebrikler! Tüm kartları tamamladınız.\n\n" +
+                        $"✅ Doğru: {CorrectCount}\n" +
+                        $"❌ Yanlış: {WrongCount}\n" +
+                        $"📊 Başarı Oranı: {SuccessRate:F1}%\n\n" +
+                        $"Yeniden başlamak ister misiniz?",
+                        "Oturum Tamamlandı",
+                        MessageBoxButton.YesNo,
+                        MessageBoxImage.Information);
+
+                    if (result == MessageBoxResult.Yes)
+                    {
+                        RestartSession();
+                    }
                 }
             }
             catch (Exception ex)
@@ -266,16 +399,25 @@ namespace VocabularyMaster.WPF.ViewModels
 
         private void ShuffleCards()
         {
-            if (!_allWords.Any()) return;
+            if (!_filteredWords.Any()) return;
 
-            var random = new Random();
-            _allWords = _allWords.OrderBy(x => random.Next()).ToList();
+            if (IsShuffled)
+            {
+                // Karışıksa orijinal sıraya döndür
+                _filteredWords = _originalFilteredWords.ToList();
+                IsShuffled = false;
+            }
+            else
+            {
+                // Karıştır
+                var random = new Random();
+                _filteredWords = _filteredWords.OrderBy(x => random.Next()).ToList();
+                IsShuffled = true;
+            }
+
             _currentIndex = 0;
-            CurrentWord = _allWords[_currentIndex];
+            CurrentWord = _filteredWords[_currentIndex];
             IsFlipped = false;
-
-            MessageBox.Show("Kartlar karıştırıldı!", "Bilgi",
-                MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         private void RestartSession()
@@ -283,15 +425,13 @@ namespace VocabularyMaster.WPF.ViewModels
             CorrectCount = 0;
             WrongCount = 0;
             _currentIndex = 0;
+            IsShuffled = false;
 
-            if (_allWords.Any())
+            if (_filteredWords.Any())
             {
-                CurrentWord = _allWords[_currentIndex];
+                CurrentWord = _filteredWords[_currentIndex];
                 IsFlipped = false;
             }
-
-            MessageBox.Show("Oturum yeniden başlatıldı!", "Bilgi",
-                MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         #endregion

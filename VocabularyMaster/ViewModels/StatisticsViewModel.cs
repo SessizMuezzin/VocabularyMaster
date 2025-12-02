@@ -25,13 +25,25 @@ namespace VocabularyMaster.WPF.ViewModels
         public int TotalWords
         {
             get => _totalWords;
-            set => SetProperty(ref _totalWords, value);
+            set
+            {
+                if (SetProperty(ref _totalWords, value))
+                {
+                    OnPropertyChanged(nameof(NotReviewedWords));
+                }
+            }
         }
 
         public int ReviewedWords
         {
             get => _reviewedWords;
-            set => SetProperty(ref _reviewedWords, value);
+            set
+            {
+                if (SetProperty(ref _reviewedWords, value))
+                {
+                    OnPropertyChanged(nameof(NotReviewedWords));
+                }
+            }
         }
 
         public int NotReviewedWords => TotalWords - ReviewedWords;
@@ -76,15 +88,32 @@ namespace VocabularyMaster.WPF.ViewModels
 
         private async Task LoadStatisticsAsync()
         {
-            TotalWords = await _wordRepository.GetTotalWordCountAsync();
-            ReviewedWords = await _wordRepository.GetReviewedWordCountAsync();
-            OnPropertyChanged(nameof(NotReviewedWords));
+            try
+            {
+                TotalWords = await _wordRepository.GetTotalWordCountAsync();
+                ReviewedWords = await _wordRepository.GetReviewedWordCountAsync();
+                OnPropertyChanged(nameof(NotReviewedWords));  // Bu zaten var
 
-            TotalReviews = await _reviewHistoryRepository.GetTotalReviewCountAsync();
-            OverallSuccessRate = await _reviewHistoryRepository.GetOverallSuccessRateAsync();
+                TotalReviews = await _reviewHistoryRepository.GetTotalReviewCountAsync();
+                OverallSuccessRate = await _reviewHistoryRepository.GetOverallSuccessRateAsync();
 
-            await LoadCategoryStatisticsAsync();
-            await LoadDifficultyStatisticsAsync();
+                await LoadCategoryStatisticsAsync();
+                await LoadDifficultyStatisticsAsync();
+
+                // TÜM PROPERTY'LERİ TEKRAR NOTIFY ET
+                OnPropertyChanged(nameof(TotalWords));
+                OnPropertyChanged(nameof(ReviewedWords));
+                OnPropertyChanged(nameof(NotReviewedWords));
+                OnPropertyChanged(nameof(TotalReviews));
+                OnPropertyChanged(nameof(OverallSuccessRate));
+                OnPropertyChanged(nameof(CategoryStats));
+                OnPropertyChanged(nameof(DifficultyStats));
+            }
+            catch (Exception ex)
+            {
+                // Hata durumunda log
+                System.Diagnostics.Debug.WriteLine($"İstatistik yükleme hatası: {ex.Message}");
+            }
         }
 
         private async Task LoadCategoryStatisticsAsync()
@@ -127,6 +156,8 @@ namespace VocabularyMaster.WPF.ViewModels
                 DifficultyStats.Add(stat);
             }
         }
+
+
     }
 
     public class CategoryStatistic
