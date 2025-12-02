@@ -21,7 +21,7 @@ VocabularyMaster is a modern desktop application designed to streamline the proc
 
 ![VocabularyMaster Ana Ekran](Images/Ana-Ekran.png)
 ![VocabularyMaster Kelimeler](Images/Kelimeler.png)
-![VocabularyMaster Kelime-Ekle](Kelime-Ekle.png)
+![VocabularyMaster Kelime-Ekle](Images/Kelime-Ekle.png)
 ![VocabularyMaster Bosluk-Doldur-Test(Images/Bosluk-Doldur-Test.png)
 ![VocabularyMaster Flashcard](Images/Flashcard.png)
 ![VocabularyMaster Istatistik](Images/Istatistik.png)
